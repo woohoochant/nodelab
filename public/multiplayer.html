@@ -21,89 +21,92 @@
 -->
 
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="icon" href="/favicon.ico">
-    <link rel="manifest" href="/site.webmanifest">
-    <link rel="stylesheet" type="text/css" href="styles.css">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" type="text/css" href="styles.css">
 
 
-    <script src="https://cdn.socket.io/4.2.0/socket.io.min.js" integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj" crossorigin="anonymous"></script>
-    <script type="module" src="audioConnect.mjs"></script>
+  <script src="https://cdn.socket.io/4.2.0/socket.io.min.js"
+    integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj"
+    crossorigin="anonymous"></script>
+  <script type="module" src="audioConnect.mjs"></script>
 
-    <script type="text/javascript" src="networkMessages.js"></script>
-
-   
-
-  </head>
-
-
-
-  <style type=”text/css”>
-    body {
-      margin: 0;
-      font-size: 20px;
-    }
-
-    .centered {
-      position: absolute;
-      top: 40%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-
-    .video-position {
-      position: absolute;
-      top: 35%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-
-    #video-chat-container {
-      width: 100%;
-      background-color: black;
-    }
-
-    #local-video {
-      position: absolute;
-      height: 30%;
-      width: 30%;
-      bottom: 0px;
-      left: 0px;
-    }
-
-    #remote-video {
-      height: 100%;
-      width: 100%;
-    }
-
-    video{
-              height: 100%;
-      width: 100%;
-    }
-  </style>
+  <script type="text/javascript" src="networkMessages.js"></script>
 
 
 
-
-  <body>
-
+</head>
 
 
-    <!-- <div id="room-selection-container" class="centered">
+
+<style type=”text/css”>
+  body {
+    margin: 0;
+    font-size: 20px;
+  }
+
+  .centered {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .video-position {
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  #video-chat-container {
+    width: 100%;
+    background-color: black;
+  }
+
+  #local-video {
+    position: absolute;
+    height: 30%;
+    width: 30%;
+    bottom: 0px;
+    left: 0px;
+  }
+
+  #remote-video {
+    height: 100%;
+    width: 100%;
+  }
+
+  video {
+    height: 100%;
+    width: 100%;
+  }
+</style>
+
+
+
+
+<body>
+
+
+
+  <!-- <div id="room-selection-container" class="centered">
       <h1>WebRTC video conference</h1>
       <label>Enter the number of the room you want to connect</label>
       <input id="room-input" type="text" />
       <button id="connect-button">CONNECT</button>
     </div>
    -->
-    <div id="audio-chat-container" class="videos" style="display: none">
-      <!-- <video id="local-video" autoplay="autoplay"></video> -->
-      <!-- <video id="remote-video" autoplay="autoplay"></video> -->
-    </div>
+  <div id="audio-chat-container" class="videos" style="display: none">
+    <!-- <video id="local-video" autoplay="autoplay"></video> -->
+    <!-- <video id="remote-video" autoplay="autoplay"></video> -->
+  </div>
 
 
 
@@ -120,50 +123,42 @@
 
 
 
-    <div id="avatar-customization">
-      <div class="avatar-background">
-        <h1>Avatar Customization</h1>
-        <div class="color-grid">
-          <div class="grid-item">
-            <h2 style="color: red">Red</h2>
-            <input type="range" min="0" max="255" value="255" id="red-slider" />
-            <h2 style="color: green">Green</h2>
-            <input
-              id="green-slider"
-              type="range"
-              min="0"
-              max="255"
-              value="255"
-            />
-            <h2 style="color: blue">Blue</h2>
-            <input
-              id="blue-slider"
-              type="range"
-              min="0"
-              max="255"
-              value="255"
-            />
+  <h1>WebXR Studio</h1>
+  <div id="avatar-customization">
+    <div class="avatar-background">
+      <div class="avatar-header">
+        <h2>Avatar Customization</h2>
+        <hr />
+      </div>
+      <div class="grid">
+        <div class="color-item">
+          <div class="color-sliders">
+            <h3>Red</h3>
+            <input type="range" min="0" max="255" value="255" id="red-slider">
+            <h3>Green</h3>
+            <input id="green-slider" type="range" min="0" max="255" value="255">
+            <h3>Blue</h3>
+            <input id="blue-slider" type="range" min="0" max="255" value="255">
           </div>
-          <div class="grid-item">
-            <div id="login-section">
-              <label for="username">Username:</label><br />
-              <input type="text" id="username" name="username" /><br /><br/><br/><br/>
-              <button id="login-button" type="button">Login</button>
-            </div>
-          </div>
-          <div class="grid-item">
-            <h2>Size</h2>
-            <input
-              type="range"
-              min="50"
-              max="100"
-              value="75"
-              id="size-slider"
-            /><br/><br/>
-            <div id="colour-swatch" style="width:100%; height:50px; background-color: black"></div>
+          <div class="swatch">
+            <input type="color" id="colour-swatch"><br><br>
+            <h3>Colour</h3>
           </div>
         </div>
+        <div class="grid-item">
+          <div id="login-section">
+            <h3>Username:</h3>
+            <input type="text" id="username" name="username"><br>
+            <button id="login-button" type="button">Login</button>
+          </div>
+        </div>
+        <div class="size-item">
+          <h3>Player Size</h3><br>
+          <input type="range" min="50" max="100" value="75" id="size-slider" style="width: 100%;"><br><br>
+        </div>
       </div>
+    </div>
+  </div>
 
 
 
@@ -172,245 +167,277 @@
 
 
 
-    <script type="module">
-      'use strict';
-      
-      import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.126.0/build/three.module.js';            
-      import { World } from "./world.mjs"; 
-      import { initializeReplication, updateUserReplica, replicatePoses, disposeUserReplica, getOwnReplicaBody } from "./replication.mjs"; 
-      import { randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, print, showReadout } from "./utility.mjs"; 
-      import { connectToWorld } from "./connect.mjs"; 
-      import { UI } from "./ui.mjs"; 
-      import * as MKControl from './mouseKeyboardControl.mjs';
-      import * as VRControl from './vrControl.mjs';
+  <script type="module">
+    'use strict';
 
-      import joinRoom from "./audioConnect.mjs"
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.126.0/build/three.module.js';
+    import { World } from "./world.mjs";
+    import { initializeReplication, updateUserReplica, replicatePoses, disposeUserReplica, getOwnReplicaBody } from "./replication.mjs";
+    import { randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, print, showReadout, hexToRgb, rgbToHex } from "./utility.mjs";
+    import { connectToWorld } from "./connect.mjs";
+    import { UI } from "./ui.mjs";
+    import * as MKControl from './mouseKeyboardControl.mjs';
+    import * as VRControl from './vrControl.mjs';
 
-      console.log("MY LITTLE TEST")
+    import joinRoom from "./audioConnect.mjs"
 
-      // Setup login form. Randomize the colour value for variety.
-      const form = document.getElementById('avatar-customization');
-      const displayNameField = document.getElementById('username');
-      const colourSliders = [
-        document.getElementById('red-slider'),
-        document.getElementById('green-slider'),
-        document.getElementById('blue-slider')
-      ];
-      for (let i = 0; i < 3; i++) {
-        const slider = colourSliders[i];
-        slider.value = Math.floor(Math.random() * 256);
-        slider.oninput = updateSwatch;
-      }
-      document.getElementById('login-button').onclick = logIn;
+    console.log("MY LITTLE TEST")
+
+    // Setup login form. Randomize the colour value for variety.
+    const form = document.getElementById('avatar-customization');
+    const displayNameField = document.getElementById('username');
+    const colourSwatch = document.querySelector('#colour-swatch');
+    const colourSliders = [
+      document.getElementById('red-slider'),
+      document.getElementById('green-slider'),
+      document.getElementById('blue-slider')
+    ];
+    for (let i = 0; i < 3; i++) {
+      const slider = colourSliders[i];
+      slider.value = Math.floor(Math.random() * 256);
+      slider.oninput = updateSwatch;
+    }
+    document.getElementById('login-button').onclick = logIn;
+
+    colourSwatch.addEventListener('input', function (e) {
+        updateColourSliders();
+    });
 
 
-      
-
-      function getFormColour() {        
+    function getFormColour() {
         return [
-          colourSliders[0].value/255,
-          colourSliders[1].value/255,
-          colourSliders[2].value/255
+            parseInt(colourSliders[0].value),
+            parseInt(colourSliders[1].value),
+            parseInt(colourSliders[2].value)
         ];
+    }
+
+    function updateColourSliders() {
+      const rgb = hexToRgb(colourSwatch.value);
+      colourSliders[0].value = rgb[0];
+      colourSliders[1].value = rgb[1];
+      colourSliders[2].value = rgb[2];
+    }
+
+    function updateSwatch() {
+      const colour = rgbToHex(getFormColour());
+      colourSwatch.value = colour;
+    }
+
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    function generateName() {
+        const adjectiveList = ['adorable', 'adventurous', 'aggressive', 'angry', 'anxious', 'bad', 'black', 'bored', 'brainy', 'calm', 'careful', 'beautiful', 'lone', 'red', 'purple', 'pink',
+            'brown', 'white', 'green', 'orange', 'cool', 'swaggy', 'interesting', 'intelligent', 'smart', 'clumsy', 'funny', 'charismatic', 'cheerful', 'charming', 'curious', 'crazy', 'dangerous',
+            'clever', 'cooperative', 'busy', 'brave', 'courageous', 'eager', 'evil', 'gorgeous', 'gifted', 'fragile', 'healthy', 'hungry', 'lonely', 'mysterious', 'shy', 'ugly', 'talented', 'witty'];
+        const nounList = ['bear', 'coyote', 'human', 'individual', 'person', 'cat', 'dog', 'player', 'wolf', 'tiger', 'leopard', 'parrot', 'bird', 'fish', 'animal', 'gamer', 'athlete', 'teacher'
+            , 'student', 'driver', 'runner', 'singer', 'dancer', 'pedestrian', 'cow', 'pig', 'chicken', 'engineer', 'doctor', 'nurse', 'firefighter', 'warrior', 'soldier', 'mage', 'knight', 'baker',
+            'chef', 'emperor', 'actor', 'flower', 'horse', 'kangaroo', 'lizard', 'monkey', 'zebra', 'ghost', 'magician', 'elephant', 'canadian', 'apple', 'specimen', 'unit', 'citizen'];
+
+        let adjective = capitalizeFirstLetter(adjectiveList[Math.floor(Math.random() * adjectiveList.length)]);
+        let noun = capitalizeFirstLetter(nounList[Math.floor(Math.random() * nounList.length)]);
+        return `${adjective} ${noun}`;
+    }
+
+    // Attempt to retrieve user name and preferences stored on the last successful login.
+    // If available, use these values to overwrite the form defaults.
+    let localStorageAvailable = false;
+    displayNameField.value = generateName();
+    try {
+      let storage = window.localStorage;
+      let name = storage.getItem('userName');
+      if (name) displayNameField.value = name;
+
+      let colour = parseInt(storage.getItem('userColour'));
+      if (colour) {
+        const triplet = colourHexToTriplet(parseInt(colour));
+        for (let i = 0; i < 3; i++) {
+          colourSliders[i].value = triplet[i] * 255;
+        }
       }
 
-      function updateSwatch() {
-        const colour = colourTripletToHex(getFormColour());
-        document.getElementById('colour-swatch').style.backgroundColor = colourHexToString(colour);
-      }      
+      localStorageAvailable = true;
+    } finally { }
 
-      // Attempt to retrieve user name and preferences stored on the last successful login.
-      // If available, use these values to overwrite the form defaults.
-      let localStorageAvailable = false;
-      try {
+    updateSwatch();
+
+    // Enter our 3D scene and initiate server communication once user has picked their name and signed in.
+    function logIn() {
+
+
+
+      // Prep a DOM element to display debug messages.
+      const readout = document.createElement('div');
+      readout.style.position = 'absolute';
+      readout.style.top = '0px';
+      document.body.appendChild(readout);
+
+      // Setup a basic THREE.js scene with camera, floor, etc.
+      const world = new World();
+
+      const colourTriplet = getFormColour();
+      colourTriplet[0] /= 255;
+      colourTriplet[1] /= 255;
+      colourTriplet[2] /= 255;
+
+      // Set up our replication system so it's ready to receive information about users.
+      initializeReplication(world, colourTriplet);
+
+      // Connect to server, wiring up handlers for various messages.
+      const app = connectToWorld({
+        reload_on_disconnect: true, // useful for local dev
+        room: "/multiplayer",
+        url: location.origin.replace(/^http/, 'ws'),
+        userName: document.getElementById('username').value,
+        userRGB: colourTriplet,
+        onuser: updateUserReplica,
+        onuserexit: disposeUserReplica
+      });
+
+
+
+      // If we get this far, save this user name and colour for next log-in too.
+      if (localStorageAvailable) {
         let storage = window.localStorage;
-        let name = storage.getItem('userName');
-        if (name) displayNameField.value = name;
-
-        let colour = parseInt(storage.getItem('userColour'));        
-        if (colour) {          
-          const triplet = colourHexToTriplet(parseInt(colour));
-          for (let i = 0; i < 3; i++) {
-            colourSliders[i].value = triplet[i] * 255;
-          }
-        }
-
-        localStorageAvailable = true;
-      } finally {}
-
-      updateSwatch();
-
-      // Enter our 3D scene and initiate server communication once user has picked their name and signed in.
-      function logIn() {       
-
-        
-
-        // Prep a DOM element to display debug messages.
-        const readout = document.createElement('div');
-        readout.style.position = 'absolute';
-        readout.style.top = '0px';
-        document.body.appendChild(readout);       
-
-        // Setup a basic THREE.js scene with camera, floor, etc.
-        const world = new World();    
-
-        const colourTriplet = getFormColour();
-
-        // Set up our replication system so it's ready to receive information about users.
-        initializeReplication(world, colourTriplet);
-
-        // Connect to server, wiring up handlers for various messages.
-        const app = connectToWorld({
-          reload_on_disconnect: true, // useful for local dev
-          room: "/multiplayer",
-          url: location.origin.replace(/^http/, 'ws'),
-          userName: document.getElementById('username').value,
-          userRGB: colourTriplet,
-          onuser: updateUserReplica,
-          onuserexit: disposeUserReplica
-        });
-
-        
-
-        // If we get this far, save this user name and colour for next log-in too.
-        if (localStorageAvailable) {
-          let storage = window.localStorage;
-          storage.setItem('userName', displayNameField.value);
-          const colour =  colourTripletToHex(colourTriplet);          
-          storage.setItem('userColour', colour);
-        }
-
-        // We're done with the login form now, and can safely hide it.
-        form.style.display = 'none';
-
-        {
-          // Place our user into this scene.
-          // TODO: Get spawn position / facing angle from server
-          // so we don't overlap users already in the room, or end up facing away from everyone.
-          // For now, we'll just pick a random angle around a circle facing inward, and hope.
-          const angle = Math.random() * Math.PI * 2;
-          const direction = new THREE.Vector3(-Math.sin(angle), 0, -Math.cos(angle));
-
-          const position = direction.clone();
-          position.multiplyScalar(-3);
-
-          world.teleportClientSpace(position, direction);
-        }
-
-        // Set up mouse/keyboard controls.        
-        MKControl.initializeControls(world);
-        VRControl.initializeControls(world);
-
-        // Set up raycasting for mouse/gaze picking.
-        const raycaster = new THREE.Raycaster();
-        
-
-        // Keep track of the last looked-at object - for future use.
-        let gazeObject = null;
-        
-        // Fill scene with some basic demo content.
-        const cube = new THREE.Mesh(world.primitiveGeo.box, world.defaultMaterial);      
-        cube.position.set(0, 1.5, 0);
-        cube.castShadow = true;
-        world.scene.add(cube);
-
-        // Create pointer object that follows mouse/gaze.
-        const ico = new THREE.Mesh(world.primitiveGeo.ico,
-          new THREE.MeshLambertMaterial({ color: 0xff0000 })
-        );
-        ico.scale.set(0.1, 0.1, 0.1);
-        ico.position.z = -1;
-        world.scene.add(ico);        
-
-        ////////////////////////////////////////////////////////////////////////
-        
-        UI.init(world);
-        UI.addTextGroupTo( getOwnReplicaBody() );
-        UI.addButtonsTo( getOwnReplicaBody() );
-
-        // UI.print("it's printing!");
-
-         // hides or shows the 3D text in the scene when 'l' is pressed
-         document.addEventListener('keypress', (event) => {
-          if(event.key == "l"){
-            if(UI.isVisible){
-              UI.textGroup.visible = false;
-              UI.isVisible = false;
-            }
-            else {
-              UI.textGroup.visible = true;
-              UI.isVisible = true;
-              
-            }
-            
-          }
-        });
-
-        ////////////////////////////////////////////////////////////////////////
-
-        // Main rendering loop.
-        function animate() {
-          const dt = world.clock.getDelta();
-          const t = world.clock.getElapsedTime();
-          let activeCamera;
-
-          if (world.renderer.xr.isPresenting) {
-            activeCamera = world.vrCamera;
-            // In VR, we want our gaze ray to always go through the center of the view.
-            // (At least until headsets give us eye tracking...)            
-            MKControl.mouse.set(0, 0);            
-            VRControl.updateControls(dt);
-          } else {
-            activeCamera = world.mouseCamera;
-            // In non-VR, step the mouse and keyboard controls.
-            MKControl.updateControls(dt);  
-            
-            UI.updateMK(dt, MKControl, activeCamera);
-            
-          }
-
-          // Figure out what we're looking at and move our gaze marker icosahedron there.
-          raycaster.setFromCamera(MKControl.mouse, activeCamera);
-          const intersects = raycaster.intersectObjects([cube, ...world.walkable]);
-
-          let newGaze = null;
-          if (intersects.length > 0) {
-            ico.position.copy(intersects[0].point);
-            newGaze = intersects[0].object;
-          }
-          // TODO: handle gaze enter / exit events when the gaze target changes.
-          if (newGaze) gazeObject = newGaze;
-
-          // update the scene:
-          cube.rotation.x += 0.01;
-          cube.rotation.y += 0.01;
-
-          ico.rotation.x -= 0.01;
-          ico.rotation.y -= 0.01;
-
-          // Get the data objects that sync to/from the server.
-          let { self, others } = app.users;
-          // Update our data into the self object, and update avatars for remote users from the others object.
-          replicatePoses(self, others);
-          
-          // Render with the appropriate camera for either VR or non-VR modes.
-          world.renderer.render(world.scene, activeCamera);
-
-          showReadout(readout);
-        }
-
-        // Start animating!
-        
-        world.renderer.setAnimationLoop(animate);
-
-        joinRoom()
+        storage.setItem('userName', displayNameField.value);
+        const colour = colourTripletToHex(colourTriplet);
+        storage.setItem('userColour', colour);
       }
 
-      
+      // We're done with the login form now, and can safely hide it.
+      form.style.display = 'none';
 
-    </script>
-  
- 
+      {
+        // Place our user into this scene.
+        // TODO: Get spawn position / facing angle from server
+        // so we don't overlap users already in the room, or end up facing away from everyone.
+        // For now, we'll just pick a random angle around a circle facing inward, and hope.
+        const angle = Math.random() * Math.PI * 2;
+        const direction = new THREE.Vector3(-Math.sin(angle), 0, -Math.cos(angle));
+
+        const position = direction.clone();
+        position.multiplyScalar(-3);
+
+        world.teleportClientSpace(position, direction);
+      }
+
+      // Set up mouse/keyboard controls.        
+      MKControl.initializeControls(world);
+      VRControl.initializeControls(world);
+
+      // Set up raycasting for mouse/gaze picking.
+      const raycaster = new THREE.Raycaster();
+
+
+      // Keep track of the last looked-at object - for future use.
+      let gazeObject = null;
+
+      // Fill scene with some basic demo content.
+      const cube = new THREE.Mesh(world.primitiveGeo.box, world.defaultMaterial);
+      cube.position.set(0, 1.5, 0);
+      cube.castShadow = true;
+      world.scene.add(cube);
+
+      // Create pointer object that follows mouse/gaze.
+      const ico = new THREE.Mesh(world.primitiveGeo.ico,
+        new THREE.MeshLambertMaterial({ color: 0xff0000 })
+      );
+      ico.scale.set(0.1, 0.1, 0.1);
+      ico.position.z = -1;
+      world.scene.add(ico);
+
+      ////////////////////////////////////////////////////////////////////////
+
+      UI.init(world);
+      UI.addTextGroupTo(getOwnReplicaBody());
+      UI.addButtonsTo(getOwnReplicaBody());
+
+      // UI.print("it's printing!");
+
+      // hides or shows the 3D text in the scene when 'l' is pressed
+      document.addEventListener('keypress', (event) => {
+        if (event.key == "l") {
+          if (UI.isVisible) {
+            UI.textGroup.visible = false;
+            UI.isVisible = false;
+          }
+          else {
+            UI.textGroup.visible = true;
+            UI.isVisible = true;
+
+          }
+
+        }
+      });
+
+      ////////////////////////////////////////////////////////////////////////
+
+      // Main rendering loop.
+      function animate() {
+        const dt = world.clock.getDelta();
+        const t = world.clock.getElapsedTime();
+        let activeCamera;
+
+        if (world.renderer.xr.isPresenting) {
+          activeCamera = world.vrCamera;
+          // In VR, we want our gaze ray to always go through the center of the view.
+          // (At least until headsets give us eye tracking...)            
+          MKControl.mouse.set(0, 0);
+          VRControl.updateControls(dt);
+        } else {
+          activeCamera = world.mouseCamera;
+          // In non-VR, step the mouse and keyboard controls.
+          MKControl.updateControls(dt);
+
+          UI.updateMK(dt, MKControl, activeCamera);
+
+        }
+
+        // Figure out what we're looking at and move our gaze marker icosahedron there.
+        raycaster.setFromCamera(MKControl.mouse, activeCamera);
+        const intersects = raycaster.intersectObjects([cube, ...world.walkable]);
+
+        let newGaze = null;
+        if (intersects.length > 0) {
+          ico.position.copy(intersects[0].point);
+          newGaze = intersects[0].object;
+        }
+        // TODO: handle gaze enter / exit events when the gaze target changes.
+        if (newGaze) gazeObject = newGaze;
+
+        // update the scene:
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+
+        ico.rotation.x -= 0.01;
+        ico.rotation.y -= 0.01;
+
+        // Get the data objects that sync to/from the server.
+        let { self, others } = app.users;
+        // Update our data into the self object, and update avatars for remote users from the others object.
+        replicatePoses(self, others);
+
+        // Render with the appropriate camera for either VR or non-VR modes.
+        world.renderer.render(world.scene, activeCamera);
+
+        showReadout(readout);
+      }
+
+      // Start animating!
+
+      world.renderer.setAnimationLoop(animate);
+
+      joinRoom()
+    }
+
+
+
+  </script>
+
+
 
 </body>
+
 </html>

@@ -20,8 +20,8 @@ function print(...params) {
 
 // Display the text and clear the buffer for next frame.
 function showReadout(readout) {
-    readout.innerHTML = toPrint;
-    toPrint = '';
+  readout.innerHTML = toPrint;
+  toPrint = '';
 }
 
 
@@ -31,9 +31,42 @@ function showReadout(readout) {
  */
 function randomColourHex() {
   const maxVal = 0xFFFFFF;
-  const randomNumber = Math.random() * maxVal;         
+  const randomNumber = Math.random() * maxVal;
   return Math.floor(randomNumber);
 }
+
+/**
+ * Converts an integer to a hexidecimal string.
+ * @param {number} rgb component of integer type.
+ * @returns {string} hexidecimal component.
+ */
+function componentToHex(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+/* Taken from Tim Down on StackOverflow
+ * @param {number[]} triplet, an array of RGB values in the range 0-1.
+ * @returns {string} hexidecimal string.
+ */
+function rgbToHex(rgb) {
+  return "#" + componentToHex(rgb[0]) + componentToHex(rgb[1]) + componentToHex(rgb[2]);
+}
+
+/* Taken from Tim Down on StackOverflow
+ * @param {string} input hex value.
+ * @returns {number[]} triplet, an array of RGB values in the range.
+ */
+function hexToRgb(hex) {
+  // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+  var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+    return r + r + g + g + b + b;
+  });
+
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : null;
+}
+
 
 /**
  * Converts a number representing an RGB or RGBA colour into a hexadecimal string.
@@ -50,17 +83,17 @@ function colourHexToString(colour) {
  * @returns {number[]} the colour as an array of RGB(A) values in the range 0-1, in order [R, G, B, (A)].
  */
 function colourHexToTriplet(colourHex) {
-    const fourBytes = colourHex > 0xFFFFFF;
-    const output = fourBytes ? [0, 0, 0, 0] : [0, 0, 0];
-    // Detect whether we have a 3 or 4-byte 
-    let i =  output.length - 1;
-    while(colourHex > 0) {
-        const byte = colourHex & 0xFF;
-        output[i] = byte/255.0;
-        colourHex >>= 8;
-        i--;
-    }
-    return output;
+  const fourBytes = colourHex > 0xFFFFFF;
+  const output = fourBytes ? [0, 0, 0, 0] : [0, 0, 0];
+  // Detect whether we have a 3 or 4-byte 
+  let i = output.length - 1;
+  while (colourHex > 0) {
+    const byte = colourHex & 0xFF;
+    output[i] = byte / 255.0;
+    colourHex >>= 8;
+    i--;
+  }
+  return output;
 }
 
 /**
@@ -69,11 +102,11 @@ function colourHexToTriplet(colourHex) {
  * @returns {number} a 24-bit unsigned integer representing an RGB colour.
  */
 function colourTripletToHex(triplet) {
-    let output = 0;
-    for (let i = 0; i < 3; i++) {
-        output += Math.floor(triplet[2 - i] * 0xFF) << (8 * i);
-    }
-    return output;
+  let output = 0;
+  for (let i = 0; i < 3; i++) {
+    output += Math.floor(triplet[2 - i] * 0xFF) << (8 * i);
+  }
+  return output;
 }
 
 function azimuthFromQuaternion(q) {
@@ -82,4 +115,4 @@ function azimuthFromQuaternion(q) {
   return Math.atan2(s, c);
 }
 
-export { vectorToString, print, showReadout, randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, azimuthFromQuaternion }
+export { vectorToString, print, showReadout, randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, azimuthFromQuaternion, hexToRgb, rgbToHex}
