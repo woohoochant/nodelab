@@ -95,6 +95,37 @@ function colourHexToTriplet(colourHex) {
   }
   return output;
 }
+/**
+ * normalizes a colour value from 0-255 to 0-1.
+ * @param {number[]} colour triplet of rgb values ranging from 0-255.
+ * @returns {number[]} colour triplet of rgb values ranging from 0-1.
+ */
+function normalizeColour(colourTriplet) {
+  colourTriplet[0] /= 255;
+  colourTriplet[1] /= 255;
+  colourTriplet[2] /= 255;
+  return colourTriplet;
+}
+
+
+//capitalizes the first character in a string
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+//Generates a random name using random adjective and noun
+function generateName() {
+  const adjectiveList = ['adorable', 'adventurous', 'aggressive', 'angry', 'anxious', 'bad', 'black', 'bored', 'brainy', 'calm', 'careful', 'beautiful', 'lone', 'red', 'purple', 'pink',
+    'brown', 'white', 'green', 'orange', 'cool', 'swaggy', 'interesting', 'intelligent', 'smart', 'clumsy', 'funny', 'charismatic', 'cheerful', 'charming', 'curious', 'crazy', 'dangerous',
+    'clever', 'cooperative', 'busy', 'brave', 'courageous', 'eager', 'evil', 'gorgeous', 'gifted', 'fragile', 'healthy', 'hungry', 'lonely', 'mysterious', 'shy', 'ugly', 'talented', 'witty'];
+  const nounList = ['bear', 'coyote', 'human', 'individual', 'person', 'cat', 'dog', 'player', 'wolf', 'tiger', 'leopard', 'parrot', 'bird', 'fish', 'animal', 'gamer', 'athlete', 'teacher'
+    , 'student', 'driver', 'runner', 'singer', 'dancer', 'pedestrian', 'cow', 'pig', 'chicken', 'engineer', 'doctor', 'nurse', 'firefighter', 'warrior', 'soldier', 'mage', 'knight', 'baker',
+    'chef', 'emperor', 'actor', 'flower', 'horse', 'kangaroo', 'lizard', 'monkey', 'zebra', 'ghost', 'magician', 'elephant', 'canadian', 'apple', 'specimen', 'unit', 'citizen'];
+
+  let adjective = capitalizeFirstLetter(adjectiveList[Math.floor(Math.random() * adjectiveList.length)]);
+  let noun = capitalizeFirstLetter(nounList[Math.floor(Math.random() * nounList.length)]);
+  return `${adjective} ${noun}`;
+}
 
 /**
  * Packs a triplet of colour values into a single 3-byte number.
@@ -115,4 +146,4 @@ function azimuthFromQuaternion(q) {
   return Math.atan2(s, c);
 }
 
-export { vectorToString, print, showReadout, randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, azimuthFromQuaternion, hexToRgb, rgbToHex}
+export { vectorToString, print, showReadout, randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, azimuthFromQuaternion, hexToRgb, rgbToHex, normalizeColour, generateName}

@@ -32,47 +32,40 @@
     <script type="text/javascript" src="networkMessages.js"></script>
   </head>
   <body>
-    <div id="avatar-customization">
-      <div class="avatar-background">
-        <h1>Avatar Customization</h1>
-        <div class="color-grid">
-          <div class="grid-item">
-            <h2 style="color: red">Red</h2>
-            <input type="range" min="0" max="255" value="255" id="red-slider" />
-            <h2 style="color: green">Green</h2>
-            <input
-              id="green-slider"
-              type="range"
-              min="0"
-              max="255"
-              value="255"
-            />
-            <h2 style="color: blue">Blue</h2>
-            <input
-              id="blue-slider"
-              type="range"
-              min="0"
-              max="255"
-              value="255"
-            />
+    <div id="startup">
+      <h1>WebXR Studio</h1>
+      <div id="avatar-customization">
+        <div class="avatar-background">
+          <div class="avatar-header">
+            <h2>Avatar Customization</h2>
+            <hr />
           </div>
-          <div class="grid-item">
-            <div id="login-section">
-              <label for="username">Username:</label><br />
-              <input type="text" id="username" name="username" /><br /><br/><br/><br/>
-              <button id="login-button" type="button">Login</button>
+          <div class="grid">
+            <div class="color-item">
+              <div class="color-sliders">
+                <h3>Red</h3>
+                <input type="range" min="0" max="255" value="255" id="red-slider">
+                <h3>Green</h3>
+                <input id="green-slider" type="range" min="0" max="255" value="255">
+                <h3>Blue</h3>
+                <input id="blue-slider" type="range" min="0" max="255" value="255">
+              </div>
+              <div class="swatch">
+                <input type="color" id="colour-swatch"><br><br>
+                <h3>Colour</h3>
+              </div>
             </div>
-          </div>
-          <div class="grid-item">
-            <h2>Size</h2>
-            <input
-              type="range"
-              min="50"
-              max="100"
-              value="75"
-              id="size-slider"
-            /><br/><br/>
-            <div id="colour-swatch" style="width:100%; height:50px; background-color: black"></div>
+            <div class="grid-item">
+              <div id="login-section">
+                <h3>Username:</h3>
+                <input type="text" id="username" name="username"><br>
+                <button id="login-button" type="button">Login</button>
+              </div>
+            </div>
+            <div class="size-item">
+              <h3>Player Size</h3><br>
+              <input type="range" min="50" max="100" value="75" id="size-slider" style="width: 100%;"><br><br>
+            </div>
           </div>
         </div>
       </div>
@@ -83,7 +76,7 @@
       import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.126.0/build/three.module.js';            
       import { World } from "./world.mjs"; 
       import { initializeReplication, updateUserReplica, replicatePoses, disposeUserReplica } from "./replication.mjs"; 
-      import { randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, print, showReadout } from "./utility.mjs"; 
+      import { randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, print, showReadout, normalizeColour, hexToRgb, rgbToHex, generateName} from "./utility.mjs"; 
       import { connectToWorld } from "./connect.mjs"; 
       import * as MKControl from './mouseKeyboardControl.mjs';
       import * as VRControl from './vrControl.mjs';
@@ -93,6 +86,7 @@
       // Setup login form. Randomize the colour value for variety.
       const form = document.getElementById('avatar-customization');
       const displayNameField = document.getElementById('username');
+      const colourSwatch = document.querySelector('#colour-swatch');
       const colourSliders = [
         document.getElementById('red-slider'),
         document.getElementById('green-slider'),
@@ -105,32 +99,37 @@
       }
       document.getElementById('login-button').onclick = logIn;
 
+      function updateColourSliders() {
+        const rgb = hexToRgb(colourSwatch.value);
+        colourSliders[0].value = rgb[0];
+        colourSliders[1].value = rgb[1];
+        colourSliders[2].value = rgb[2];
+      }
 
-      
-
-      function getFormColour() {        
+      function getFormColour() {
         return [
-          colourSliders[0].value/255,
-          colourSliders[1].value/255,
-          colourSliders[2].value/255
+          parseInt(colourSliders[0].value),
+          parseInt(colourSliders[1].value),
+          parseInt(colourSliders[2].value)
         ];
       }
 
       function updateSwatch() {
-        const colour = colourTripletToHex(getFormColour());
-        document.getElementById('colour-swatch').style.backgroundColor = colourHexToString(colour);
-      }      
+        const colour = rgbToHex(getFormColour());
+        colourSwatch.value = colour;
+      }
 
       // Attempt to retrieve user name and preferences stored on the last successful login.
       // If available, use these values to overwrite the form defaults.
       let localStorageAvailable = false;
+      displayNameField.value = generateName();
       try {
         let storage = window.localStorage;
         let name = storage.getItem('userName');
         if (name) displayNameField.value = name;
 
-        let colour = parseInt(storage.getItem('userColour'));        
-        if (colour) {          
+        let colour = parseInt(storage.getItem('userColour'));
+        if (colour) {
           const triplet = colourHexToTriplet(parseInt(colour));
           for (let i = 0; i < 3; i++) {
             colourSliders[i].value = triplet[i] * 255;
@@ -138,9 +137,14 @@
         }
 
         localStorageAvailable = true;
-      } finally {}
+      } finally { }
 
       updateSwatch();
+
+      colourSwatch.addEventListener('input', function (e) {
+        updateColourSliders();
+      });
+
 
       // Enter our 3D scene and initiate server communication once user has picked their name and signed in.
       function logIn() {       
@@ -154,7 +158,7 @@
         // Setup a basic THREE.js scene with camera, floor, etc.
         const world = new World();    
 
-        const colourTriplet = getFormColour();
+        const colourTriplet = normalizeColour(getFormColour());
 
         // Set up our replication system so it's ready to receive information about users.
         initializeReplication(world, colourTriplet);

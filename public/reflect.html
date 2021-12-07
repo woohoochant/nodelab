@@ -1,126 +1,102 @@
 <!--
-  Douglas Gregory - 219033117
+Douglas Gregory - 219033117
 
-  This web app demonstrates a proof of concept for network replication, showing...
-  - Presenting the user with a sign-in interface to set their display name and appearance (colour hex code)
-  - Transitioning the user to a THREE.js scene with the option to enter VR
-  - Detecting VR controllers and rendering them with matching 3D models (based on the example at https://github.com/mrdoob/three.js/blob/master/examples/webxr_vr_ballshooter.html)
-  - Establishing a connection to a WebSocket server (courtesy of Graham Wakefield's connect.js and server.js code for nodemon)
-  - Synchronizing the local user's camera/HMD pose to the server, along with controller poses if available
-  - Replicating remote users' pose data synchronized from the server, and visualizing them with custom-named and -coloured avatars
-  - Handling removal of an avatar when its user is disconnected
-  - Remembering user preferences between visits to the app, using local storage
+This web app demonstrates a proof of concept for network replication, showing...
+- Presenting the user with a sign-in interface to set their display name and appearance (colour hex code)
+- Transitioning the user to a THREE.js scene with the option to enter VR
+- Detecting VR controllers and rendering them with matching 3D models (based on the example at https://github.com/mrdoob/three.js/blob/master/examples/webxr_vr_ballshooter.html)
+- Establishing a connection to a WebSocket server (courtesy of Graham Wakefield's connect.js and server.js code for nodemon)
+- Synchronizing the local user's camera/HMD pose to the server, along with controller poses if available
+- Replicating remote users' pose data synchronized from the server, and visualizing them with custom-named and -coloured avatars
+- Handling removal of an avatar when its user is disconnected
+- Remembering user preferences between visits to the app, using local storage
 
-  It consists of 5 main parts:
-  - This file, multiplayer.html, responsible for the login form, and calling into the other modules to set up the world/scene/connection, and running the rendering loop.
-  - world.mjs, which encapsulates the work of creating an almost-blank-slate THREE.js space with a floor and lighting, and a button to enter VR.
-  - connect.mjs, which handles connecting to a Heroku server (running server.mjs) and synchonizing user data over that connection.
-  - server.mjs, which handles running the Heroku server, serving the other files and assets to the web browser, and acting as a relay to share data over WebSocket.
-  - replication.mjs, which is responsible for tracking and displaying the local user's controllers, saving that information into the data structure connect.js synchronizes,
-    and creating/updating avatars for remote users based on the latest data synched using connect.mjs.
+It consists of 5 main parts:
+- This file, multiplayer.html, responsible for the login form, and calling into the other modules to set up the world/scene/connection, and running the rendering loop.
+- world.mjs, which encapsulates the work of creating an almost-blank-slate THREE.js space with a floor and lighting, and a button to enter VR.
+- connect.mjs, which handles connecting to a Heroku server (running server.mjs) and synchonizing user data over that connection.
+- server.mjs, which handles running the Heroku server, serving the other files and assets to the web browser, and acting as a relay to share data over WebSocket.
+- replication.mjs, which is responsible for tracking and displaying the local user's controllers, saving that information into the data structure connect.js synchronizes,
+and creating/updating avatars for remote users based on the latest data synched using connect.mjs.
 -->
 
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="icon" href="/favicon.ico">
-    <link rel="manifest" href="/site.webmanifest">
-    <link rel="stylesheet" type="text/css" href="styles.css">
-    <script type="text/javascript" src="networkMessages.js"></script>
-  </head>
-  <body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <script type="text/javascript" src="networkMessages.js"></script>
+</head>
+
+<body>
+  <div id="startup">
+    <h1>WebXR Studio</h1>
     <div id="avatar-customization">
       <div class="avatar-background">
-        <h1>Avatar Customization</h1>
-        <div class="color-grid">
-          <div class="grid-item">
-            <h2 style="color: red">Red</h2>
-            <input type="range" min="0" max="255" value="255" id="red-slider" />
-            <h2 style="color: green">Green</h2>
-            <input
-              id="green-slider"
-              type="range"
-              min="0"
-              max="255"
-              value="255"
-            />
-            <h2 style="color: blue">Blue</h2>
-            <input
-              id="blue-slider"
-              type="range"
-              min="0"
-              max="255"
-              value="255"
-            />
-          </div>
-          <div class="grid-item">
-            <div id="login-section">
-              <label for="username">Username:</label><br />
-              <input type="text" id="username" name="username" /><br /><br/><br/><br/>
-              <button id="login-button" type="button">Login</button>
+        <div class="avatar-header">
+          <h2>Avatar Customization</h2>
+          <hr />
+        </div>
+        <div class="grid">
+          <div class="color-item">
+            <div class="color-sliders">
+              <h3>Red</h3>
+              <input type="range" min="0" max="255" value="255" id="red-slider">
+              <h3>Green</h3>
+              <input id="green-slider" type="range" min="0" max="255" value="255">
+              <h3>Blue</h3>
+              <input id="blue-slider" type="range" min="0" max="255" value="255">
+            </div>
+            <div class="swatch">
+              <input type="color" id="colour-swatch"><br><br>
+              <h3>Colour</h3>
             </div>
           </div>
           <div class="grid-item">
-            <h2>Size</h2>
-            <input
-              type="range"
-              min="50"
-              max="100"
-              value="75"
-              id="size-slider"
-            /><br/><br/>
-            <div id="colour-swatch" style="width:100%; height:50px; background-color: black"></div>
+            <div id="login-section">
+              <h3>Username:</h3>
+              <input type="text" id="username" name="username"><br>
+              <button id="login-button" type="button">Login</button>
+            </div>
+          </div>
+          <div class="size-item">
+            <h3>Player Size</h3><br>
+            <input type="range" min="50" max="100" value="75" id="size-slider" style="width: 100%;"><br><br>
           </div>
         </div>
       </div>
-      <script type="x-shader/x-vertex" id="vertexshader">
+    </div>
+    <div id="audio-chat-container" class="videos" style="display: none">
+      <!-- <video id="local-video" autoplay="autoplay"></video> -->
+      <!-- <video id="remote-video" autoplay="autoplay"></video> -->
+    </div>
 
-        attribute float scale;
-  
-        void main() {
-  
-          vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-  
-          gl_PointSize = scale * ( 300.0 / - mvPosition.z );
-  
-          gl_Position = projectionMatrix * mvPosition;
-  
-        }
-      </script>
-  
-      <script type="x-shader/x-fragment" id="fragmentshader">
-  
-        uniform vec3 color;
-  
-        void main() {
-  
-          if ( length( gl_PointCoord - vec2( 0.5, 0.5 ) ) > 0.475 ) discard;
-  
-          gl_FragColor = vec4( color, 0.2 );
-  
-        }
-      </script>
+    <script src="https://cdn.socket.io/4.2.0/socket.io.min.js"
+      integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj"
+      crossorigin="anonymous"></script>
+    <script type="module" src="audioConnect.mjs"></script>
+
     <script type="module">
       'use strict';
-      
-      import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.126.0/build/three.module.js';            
-      import { World } from "./world.mjs"; 
-      import { initializeReplication, updateUserReplica, replicatePoses, disposeUserReplica } from "./replication.mjs"; 
-      import { randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, print, showReadout } from "./utility.mjs"; 
-      import { connectToWorld } from "./connect.mjs"; 
+
+      import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.126.0/build/three.module.js';
+      import { World } from "./world.mjs";
+      import { initializeReplication, updateUserReplica, replicatePoses, disposeUserReplica, getUserReplica } from "./replication.mjs";
+      import { randomColourHex, colourHexToString, colourHexToTriplet, colourTripletToHex, print, showReadout, normalizeColour, generateName, rgbToHex, hexToRgb} from "./utility.mjs";
+      import { connectToWorld } from "./connect.mjs";
       import * as MKControl from './mouseKeyboardControl.mjs';
       import * as VRControl from './vrControl.mjs';
-      
-      import { Reflector } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/objects/Reflector.js';
-      import { MeshSurfaceSampler } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/math/MeshSurfaceSampler.js';
-      import { ImprovedNoise } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/math/ImprovedNoise.js';
-      let groundMirror;
+      import { joinRoom, leaveRoom, initialize } from "./audioConnect.mjs"
+
       // Setup login form. Randomize the colour value for variety.
-      const form = document.getElementById('avatar-customization');
+      const form = document.getElementById('startup');
       const displayNameField = document.getElementById('username');
+      const colourSwatch = document.querySelector('#colour-swatch');
       const colourSliders = [
         document.getElementById('red-slider'),
         document.getElementById('green-slider'),
@@ -133,32 +109,36 @@
       }
       document.getElementById('login-button').onclick = logIn;
 
+      function updateColourSliders() {
+        const rgb = hexToRgb(colourSwatch.value);
+        colourSliders[0].value = rgb[0];
+        colourSliders[1].value = rgb[1];
+        colourSliders[2].value = rgb[2];
+      }
 
-      
-
-      function getFormColour() {        
+      function getFormColour() {
         return [
-          colourSliders[0].value/255,
-          colourSliders[1].value/255,
-          colourSliders[2].value/255
+          parseInt(colourSliders[0].value),
+          parseInt(colourSliders[1].value),
+          parseInt(colourSliders[2].value)
         ];
       }
 
       function updateSwatch() {
-        const colour = colourTripletToHex(getFormColour());
-        document.getElementById('colour-swatch').style.backgroundColor = colourHexToString(colour);
-      }      
-
+        const colour = rgbToHex(getFormColour());
+        colourSwatch.value = colour;
+      }
       // Attempt to retrieve user name and preferences stored on the last successful login.
       // If available, use these values to overwrite the form defaults.
       let localStorageAvailable = false;
+      displayNameField.value = generateName();
       try {
         let storage = window.localStorage;
         let name = storage.getItem('userName');
         if (name) displayNameField.value = name;
 
-        let colour = parseInt(storage.getItem('userColour'));        
-        if (colour) {          
+        let colour = parseInt(storage.getItem('userColour'));
+        if (colour) {
           const triplet = colourHexToTriplet(parseInt(colour));
           for (let i = 0; i < 3; i++) {
             colourSliders[i].value = triplet[i] * 255;
@@ -166,27 +146,30 @@
         }
 
         localStorageAvailable = true;
-      } finally {}
+      } finally { }
 
       updateSwatch();
 
+      colourSwatch.addEventListener('input', function (e) {
+        updateColourSliders();
+      });
+
       // Enter our 3D scene and initiate server communication once user has picked their name and signed in.
-      function logIn() {       
+      function logIn() {
 
         // Prep a DOM element to display debug messages.
         const readout = document.createElement('div');
         readout.style.position = 'absolute';
         readout.style.top = '0px';
-        document.body.appendChild(readout);       
+        document.body.appendChild(readout);
 
         // Setup a basic THREE.js scene with camera, floor, etc.
-        
-        const world = new World(false);   
-        const sphere = new THREE.SphereGeometry( 0.03, 16, 8);
 
-				//lights
-        const colourTriplet = getFormColour();
-        
+        const world = new World(false);
+        const sphere = new THREE.SphereGeometry(0.03, 16, 8);
+
+        //lights
+        const colourTriplet = normalizeColour(getFormColour());
 
         // Connect to server, wiring up handlers for various messages.
         const app = connectToWorld({
@@ -203,7 +186,7 @@
         if (localStorageAvailable) {
           let storage = window.localStorage;
           storage.setItem('userName', displayNameField.value);
-          const colour =  colourTripletToHex(colourTriplet);          
+          const colour = colourTripletToHex(colourTriplet);
           storage.setItem('userColour', colour);
         }
 
@@ -230,11 +213,12 @@
 
         // Set up raycasting for mouse/gaze picking.
         const raycaster = new THREE.Raycaster();
-        
 
+        world.scene.background = null;
+        world.scene.fog = new THREE.FogExp2('#00008b', 0.01);
         // Keep track of the last looked-at object - for future use.
         let gazeObject = null;
-        
+
         // Fill scene with some basic demo content.
         //Reaction Constants
         const k1 = 1;
@@ -249,56 +233,56 @@
         // initial concentrations for the set of chemicals:
         let chems = [0.5, 0.5, 0.5, 0.5];
 
-      function react() {
-        //unpack chemical array into local variables;
+        function react() {
+          //unpack chemical array into local variables;
+          let [a, b, c, e] = chems;
+
+          //delta changes of each chemical:
+          let da = 0,
+            db = 0,
+            dc = 0,
+            de = 0;
+          //timestep for chemical, needs to be very small  or else dynamics break.
+          let dt = 0.00001;
+
+          //Reaction Rules:
+          //A => 2A @rate k1
+          da += k1 * a;
+          //A + B => 2B @rate k2
+          da += -k2 * a * b;
+          db += k2 * a * b;
+          db += k2 * a * b;
+          // B => .          @rate k3
+          db += -k3 * b;
+
+          // C appears when B is in low supply
+          // -B => C        @rate k4
+          dc += (k4 * 1) / b;
+          // C => .         @rate k5
+          dc += -k5 * c;
+
+          //D appears when B+C=>. @rate k6
+          de += (k6 * 1) / (c * b);
+          //D =>.          @rate k7
+          de += -k6 * e;
+          // D =2D
+          de += (k7 * 1) / c;
+
+          //apply changes:
+          a += da * dt;
+          b += db * dt;
+          c += dc * dt;
+          e += de * dt;
+          //update chemical array:
+          chems = [a, b, c, e];
+        }
+
         let [a, b, c, e] = chems;
+        let numchems = chems.length;
 
-        //delta changes of each chemical:
-        let da = 0,
-          db = 0,
-          dc = 0,
-          de = 0;
-        //timestep for chemical, needs to be very small  or else dynamics break.
-        let dt = 0.00001;
-
-        //Reaction Rules:
-        //A => 2A @rate k1
-        da += k1 * a;
-        //A + B => 2B @rate k2
-        da += -k2 * a * b;
-        db += k2 * a * b;
-        db += k2 * a * b;
-        // B => .          @rate k3
-        db += -k3 * b;
-
-        // C appears when B is in low supply
-        // -B => C        @rate k4
-        dc += (k4 * 1) / b;
-        // C => .         @rate k5
-        dc += -k5 * c;
-
-        //D appears when B+C=>. @rate k6
-        de += (k6 * 1) / (c * b);
-        //D =>.          @rate k7
-        de += -k6 * e;
-        // D =2D
-        de += (k7 * 1) / c;
-
-        //apply changes:
-        a += da * dt;
-        b += db * dt;
-        c += dc * dt;
-        e += de * dt;
-        //update chemical array:
-        chems = [a, b, c, e];
-      }
-
-      let [a, b, c, e] = chems;
-      let numchems = chems.length;
-
-      const AMOUNTY = 5;
-      let particles,
-        count = 0;
+        const AMOUNTY = 5;
+        let particles,
+          count = 0;
         const numParticles = AMOUNTY;
 
         const positions = new Float32Array(numchems * 3);
@@ -309,9 +293,9 @@
         for (i = 0; i < chems.length * 3; i++) {
           let t = j / numchems;
           // positions[i] = 0.5 // x
-          // positions[i] = 40 // y
+          // positions[i] = 40 // 
           positions[i] = 0.04; // z
-
+          // console.log(positions[i]);
           let c = chems[j];
           let radius = Math.sqrt(Math.min(2, Math.max(1, c)) / Math.PI);
           scales[j] = radius;
@@ -319,206 +303,188 @@
           j++;
         }
 
-        const ParticleGeo = new THREE.BufferGeometry();
-        ParticleGeo.setAttribute(
-          'position',
-          new THREE.BufferAttribute(positions, 3)
-        );
-        ParticleGeo.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
+        // const ParticleGeo = new THREE.BufferGeometry();
+        // ParticleGeo.setAttribute(
+        //   'position',
+        //   new THREE.BufferAttribute(positions, 3)
+        // );
+        //ParticleGeo.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
 
-      
+
         //world.scene.add(particles);
 
         //CustomAvatar
-        function customAvatar(head,body,material){
-         // const cube = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), world.defaultMaterial);
-          const particleMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-              color: { value:material.color }, 
-            },
-            vertexShader: document.getElementById('vertexshader').textContent,
-            fragmentShader: document.getElementById('fragmentshader').textContent,
-            transparent:true,
-          });
+        function customAvatar(head, body, material) {
+          // const cube = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), world.defaultMaterial);
+          // const particleMaterial = new THREE.ShaderMaterial({
+          //   uniforms: {
+          //     color: { value: material.color },
+          //   },
+          //   vertexShader: document.getElementById('vertexshader').textContent,
+          //   fragmentShader: document.getElementById('fragmentshader').textContent,
+          //   transparent: true,
+          // });
 
           //
           const materialcube = new THREE.MeshPhongMaterial({
-              color: 'lightblue',
-              wireframe: false,
-              side:THREE.FrontSide, opacity:0.2
-            })
-          const cube = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.1), materialcube);
-          particles = new THREE.Points(ParticleGeo,particleMaterial);
-          head.add(particles);
-          body.add(cube);
+            shininess: 100,
+            color: 0xffffff,
+            specular: 0xffffff,
+            transparent: true,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          })
+          const cube = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.1), materialcube);
+          const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 8), materialcube);
+          //particles = new THREE.Points(ParticleGeo, particleMaterial);
+          const light = new THREE.PointLight(material.color, 0.2, 2.5);
+          light.add(cube);
+          head.add(sphere);
+          body.add(light);
+          // console.log(head);
         }
 
         // Set up our replication system so it's ready to receive information about users.
         initializeReplication(world, colourTriplet, customAvatar);
         //Agents Palette
-          const MAX_NUM_AGENTS = 50;
+        const MAX_NUM_AGENTS = 52;
 
-          const NUM_INSTANCES = MAX_NUM_AGENTS;
+        const NUM_INSTANCES = MAX_NUM_AGENTS;
 
-          const colors = [];
-          const palette = [
-            new THREE.Color('#b36200'),
-            new THREE.Color('#00008b'),
-            new THREE.Color('#b30000'),
-        ];
+        const colors = [];
+        // const palette = [
+        //   new THREE.Color('#b36200'),
+        //   new THREE.Color('#00008b'),
+        //   new THREE.Color('#b30000'),
+        // ];
 
-        //Dome
-        const spheredomegeo = new THREE.SphereGeometry(0.02, 0.16, 0.8);
-        const geometrysphere = new THREE.SphereGeometry(
-          15,
-          36,
-          16,
-          0,
-          Math.PI*2,
-          1.5707963267949,
-          1.5707963267949
-        );
 
-        const materialsphere = new THREE.MeshPhongMaterial({
-              color: 'lightblue',
-              wireframe: false,
-              side:THREE.DoubleSide
-            })
-
-        const spheredome = new THREE.Mesh(geometrysphere, materialsphere);
-        spheredome.rotation.x = -Math.PI;
-        world.scene.add(spheredome);
-      
-      //Agents of Light
-      let agents = [];
-      let objects = [];
-      for (let i = 0; i < MAX_NUM_AGENTS; i++) {
-        agents[i] = {
-          quat: new THREE.Quaternion(),
-        };
-      }
-      for (let i = 0; i < MAX_NUM_AGENTS; i++) {
-        var randomColor = palette[Math.floor(Math.random() * palette.length)];
-        const light = new THREE.PointLight(randomColor, 0.5, 7);
-        light.add(
-          new THREE.Mesh(
-            sphere,
-            new THREE.MeshPhongMaterial({
-        shininess: 100,
-        color: 0xffffff,
-        specular: 0xffffff,
-        transparent: true,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-            })
-        ));
-        light.position.x = Math.random() * 30-15;
-        light.position.y = Math.random() * 30-15;
-        light.position.z = Math.random() * 30-15;
-        objects.push(light);
-        world.scene.add(light);
-      }
-      function syncColors() {
+        //Agents of Light
+        let agents = [];
+        let objects = [];
         for (let i = 0; i < MAX_NUM_AGENTS; i++) {
-          for (let j = 1; j < MAX_NUM_AGENTS; j++) {
-            // get distance:
-            let a = objects[i];
-            let b = objects[j];
-            let x = (a.position.x - b.position.x)/0.2;
-            let y = (a.position.y - b.position.y)/0.2;
-            let z = (a.position.z - b.position.z)/0.2;
-            let dist = Math.sqrt(x * x + y * y + z * z);
-            if (dist < 8) {
-              if (a == b) {
-              } else {
-                if (a.color.getHex() == b.color.getHex()) {
+          agents[i] = {
+            quat: new THREE.Quaternion(),
+          };
+        }
+        for (let i = 0; i < MAX_NUM_AGENTS; i++) {
+          // var randomColor = palette[Math.floor(Math.random() * palette.length)];
+          const light = new THREE.PointLight('#b36200', 0.5, 7);
+          light.add(
+            new THREE.Mesh(
+              sphere,
+              new THREE.MeshPhongMaterial({
+                shininess: 100,
+                color: 0xffffff,
+                specular: 0xffffff,
+                transparent: true,
+                side: THREE.BackSide,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+              })
+            ));
+          light.position.x = Math.random() * 100 - 50;
+          light.position.y = Math.random() * 50;
+          light.position.z = Math.random() * 100 - 50;
+          objects.push(light);
+          world.scene.add(light);
+        }
+        function syncColors() {
+          for (let i = 0; i < MAX_NUM_AGENTS; i++) {
+            for (let j = 1; j < MAX_NUM_AGENTS; j++) {
+              // get distance:
+              let a = objects[i];
+              let b = objects[j];
+              let x = (a.position.x - b.position.x) / 0.2;
+              let y = (a.position.y - b.position.y) / 0.2;
+              let z = (a.position.z - b.position.z) / 0.2;
+              let dist = Math.sqrt(x * x + y * y + z * z);
+              if (dist < 2) {
+                if (a == b) {
                 } else {
-                  // show it:
-                  a.color.setHex(b.color.getHex());
-                  a.add(
-                    new THREE.Mesh(
-                      sphere,
-                      new THREE.MeshBasicMaterial({ color: b.color.getHex(), transparent:true, opacity:0.5 })
-                    )
-                  );
+                  if (a.color.getHex() == b.color.getHex()) {
+                  } else {
+                    // show it:
+                    a.color.setHex(b.color.getHex());
+                  }
                 }
               }
             }
           }
         }
-      }
 
-      function colorSteal() {
-        for (let o of objects) {
-          let x = o.position.x - cylinder.position.x;
-          let y = o.position.y - cylinder.position.y;
-          let z = o.position.z - cylinder.position.z;
-          let dist = Math.sqrt(x * x + y * y + z * z);
-          if (dist < 15) {
-            o.color.setHex(cylinder.material.color.getHex());
-            o.add(
-              new THREE.Mesh(
-                sphere,
-                new THREE.MeshBasicMaterial({
-                  color: cylinder.material.color.getHex(),
-                })
-              )
-            );
-          } else if (dist > 18) {
-            if (o.color.getHex() == cylinder.material.color.getHex()) {
-              var randomColor =
-                palette[Math.floor(Math.random() * palette.length)];
-              o.color.setHex(randomColor);
-              o.add(
-                new THREE.Mesh(
-                  sphere,
-                  new THREE.MeshBasicMaterial({ color: randomColor })
-                )
-              );
+        function colorSteal(player) {
+          for (let o of objects) {
+            // get distance from user
+            let x = o.position.x - player.volatile.poses[0].pos[0];
+            let y = o.position.y - player.volatile.poses[0].pos[1];
+            let z = o.position.z - player.volatile.poses[0].pos[2];
+            let dist = Math.sqrt(x * x + y * y + z * z);
+            if (dist < 2.5) {
+              // change color of light to user's color
+              o.color = new THREE.Color(player.user.rgb[0], player.user.rgb[1], player.user.rgb[2]);
+
             }
           }
         }
-      }
+        function colorStealOther(player, material) {
+          const replica = getUserReplica(player.id);
+          if (replica) {
+            const colour = replica.getColour();
 
-      function move(dt) {
-        var index = 0;
-        for (let o of objects) {
-          let fwd = new THREE.Vector3();
-          let speed = 0.36; // meters per second
-
-          // update each agent:
-          fwd.set(0, 0, 1);
-          // screw:
-          let rot = new THREE.Quaternion();
-          rot.setFromEuler(
-            new THREE.Euler(0.1 * (Math.random() - 0.5), 0, 10 * dt)
-          );
-          // apply it:
-          agents[index].quat.multiply(rot);
-
-          // convert forward vector to world space:
-          fwd.applyQuaternion(agents[index].quat);
-          // scale fwd by the speed and delta-time
-          // add it to the position:
-          o.position.addScaledVector(fwd, speed * dt);
-
-          var b = 6;
-          if (o.position.x > b) o.position.x -= b * 2.5;
-          if (o.position.x < -b) o.position.x += b * 2.5;
-          if (o.position.y > b) o.position.y -= b * 2;
-          if (o.position.y < -0.5) o.position.y += b * 2;
-          if (o.position.z > b) o.position.z -= b * 2.5;
-          if (o.position.z < -b) o.position.z += b * 2.5;
-
-          index++;
+            for (let o of objects) {
+              // get distance from other users
+              let x = o.position.x - player.poses[0].pos[0];
+              let y = o.position.y - player.poses[0].pos[1];
+              let z = o.position.z - player.poses[0].pos[2];
+              let dist = Math.sqrt(x * x + y * y + z * z);
+              if (dist < 2.5) {
+                // change color of light to other user's color
+                o.color = new THREE.Color(colour);
+              }
+            }
+          }
         }
-      }
 
-        const cube = new THREE.Mesh(world.primitiveGeo.box, world.defaultMaterial);      
+        function move(dt) {
+          var index = 0;
+          for (let o of objects) {
+            let fwd = new THREE.Vector3();
+            let speed = 0.36; // meters per second
+
+            // update each agent:
+            fwd.set(0, 0, 1);
+            // screw:
+            let rot = new THREE.Quaternion();
+            rot.setFromEuler(
+              new THREE.Euler(0.3 * (Math.random() - 0.5), 0, 10 * dt)
+            );
+            // apply it:
+            agents[index].quat.multiply(rot);
+
+            // convert forward vector to world space:
+            fwd.applyQuaternion(agents[index].quat);
+            // scale fwd by the speed and delta-time
+            // add it to the position:
+            o.position.addScaledVector(fwd, speed * dt);
+
+            var b = 10;
+            if (o.position.x > b) o.position.x -= b * 2;
+            if (o.position.x < -b) o.position.x += b * 2;
+            if (o.position.y > b / 2) o.position.y -= b * 2;
+            if (o.position.y < -0.5) o.position.y += b * 2;
+            if (o.position.z > b) o.position.z -= b * 2;
+            if (o.position.z < -b) o.position.z += b * 2;
+
+            index++;
+          }
+        }
+
+        const cube = new THREE.Mesh(world.primitiveGeo.box, world.defaultMaterial);
         cube.position.set(0, 1.5, 0);
         cube.castShadow = true;
-        //world.scene.add(cube);
+
 
         // Create pointer object that follows mouse/gaze.
         const ico = new THREE.Mesh(world.primitiveGeo.ico,
@@ -526,44 +492,52 @@
         );
         ico.scale.set(0.1, 0.1, 0.1);
         ico.position.z = -1;
-        world.scene.add(ico);        
+        world.scene.add(ico);
         let mesh;
-    // MeshFloor
-    let USE_WIREFRAME = false;
-    const meshFloor = new THREE.Mesh(
-            new THREE.PlaneGeometry(
-              window.innerWidth,
-              window.innerHeight,
-              window.innerWidth,
-              window.innerHeight
-            ),
-            new THREE.MeshPhongMaterial({
-              color: 'lightblue',
-              wireframe: USE_WIREFRAME,
-            })
-          );
+        // MeshFloor
 
-      // Floor Rotation
-      meshFloor.rotation.x -= Math.PI / 2;
-      meshFloor.position.y= 0.1;
-      // Cast shadows on Floor
-      meshFloor.receiveShadow = true;
-      world.scene.add(meshFloor);
-//SplitArrayIntoChunks=4 $groups of 38 agents for each of the 4 chemicals
-	function splitArrayIntoChunks(agents, maxChunkCount) {
-  const chunks = [];
-  const chunkCount = Math.min(objects.length, maxChunkCount);
-  const itemsPerChunk = agents.length / chunkCount;
-  let firstUnselectedItem = 0;
-  for (let i = 1; i <= chunkCount; i++) {
-    const next = Math.floor(i * itemsPerChunk);
-    chunks.push(objects.slice(firstUnselectedItem, next));
-    firstUnselectedItem = next;
-  }
-  return chunks;
-  console.log(chunks);
-}
-const chunks = splitArrayIntoChunks(objects, 4);
+
+        let texture = new THREE.TextureLoader().load("/images/beaten-up-metal1-Height.png");
+
+        let USE_WIREFRAME = false;
+        const meshFloor = new THREE.Mesh(
+          new THREE.PlaneGeometry(
+            window.innerWidth,
+            window.innerHeight,
+            window.innerWidth,
+            window.innerHeight
+          ),
+          new THREE.MeshPhongMaterial({
+            color: 'lightblue',
+            wireframe: USE_WIREFRAME,
+            normalMap: texture,
+          })
+        );
+
+        // Floor Rotation
+        meshFloor.rotation.x -= Math.PI / 2;
+        meshFloor.position.y = 0.1;
+        // Cast shadows on Floor
+        meshFloor.receiveShadow = true;
+        world.scene.add(meshFloor);
+
+        const ambiance = new THREE.AmbientLight('white', 0.1);
+        world.scene.add(ambiance);
+        //SplitArrayIntoChunks=4 $groups of 38 agents for each of the 4 chemicals
+        function splitArrayIntoChunks(agents, maxChunkCount) {
+          const chunks = [];
+          const chunkCount = Math.min(objects.length, maxChunkCount);
+          const itemsPerChunk = agents.length / chunkCount;
+          let firstUnselectedItem = 0;
+          for (let i = 1; i <= chunkCount; i++) {
+            const next = Math.floor(i * itemsPerChunk);
+            chunks.push(objects.slice(firstUnselectedItem, next));
+            firstUnselectedItem = next;
+          }
+          return chunks;
+          console.log(chunks);
+        }
+        const chunks = splitArrayIntoChunks(objects, 4);
         // Main rendering loop.
         function animate() {
           const dt = world.clock.getDelta();
@@ -574,12 +548,12 @@ const chunks = splitArrayIntoChunks(objects, 4);
             activeCamera = world.vrCamera;
             // In VR, we want our gaze ray to always go through the center of the view.
             // (At least until headsets give us eye tracking...)            
-            MKControl.mouse.set(0, 0);            
+            MKControl.mouse.set(0, 0);
             VRControl.updateControls(dt);
           } else {
             activeCamera = world.mouseCamera;
             // In non-VR, step the mouse and keyboard controls.
-            MKControl.updateControls(dt);            
+            MKControl.updateControls(dt);
           }
 
           // Figure out what we're looking at and move our gaze marker icosahedron there.
@@ -597,40 +571,46 @@ const chunks = splitArrayIntoChunks(objects, 4);
           // update the scene:
           move(dt);
           syncColors();
-          // mesh.material.uniforms.cameraPos.value.copy( this.camera.position );
-       //mesh.rotation.y = t*0.01;
+
 
           ico.rotation.x -= 0.01;
           ico.rotation.y -= 0.01;
           for (let i = 0; i < dt * 500000; i++) {
-          react();
-        }
-
-        //Artificial Chemistry Update
-        const positions = ParticleGeo.attributes.position.array;
-        const scales = ParticleGeo.attributes.scale.array;
-
-        let i = 0,
-          j = 0;
-
-        for (let i = 0; i < chems.length; i++) {
-          let c = chems[i];
-          let radius = Math.sqrt(Math.min(2, Math.max(0, c)) / Math.PI);
-          scales[i] = radius;
-          for (let item of chunks[i]){
-            item.scale.x = c;
-            item.scale.y = c;
-            item.scale.z = c;
-            item.distance= c*2.5;
+            react();
           }
-        }
-        //console.log(scales);
-        ParticleGeo.attributes.scale.needsUpdate = true;
+
+          //Artificial Chemistry Update
+          // const positions = ParticleGeo.attributes.position.array;
+          // const scales = ParticleGeo.attributes.scale.array;
+
+          let i = 0,
+            j = 0;
+
+          for (let i = 0; i < chems.length; i++) {
+            let c = chems[i];
+            let radius = Math.sqrt(Math.min(10, Math.max(1, c)) / Math.PI);
+            //scales[i] = radius;
+            for (let item of chunks[i]) {
+              item.scale.x = c;
+              item.scale.y = c;
+              item.scale.z = c;
+              item.distance = c * 2.5;
+            }
+          }
+
+          //console.log(scales);
+          // ParticleGeo.attributes.scale.needsUpdate = true;
           // Get the data objects that sync to/from the server.
           let { self, others } = app.users;
+          colorSteal(self);
+          for (let o of others) {
+            if (others != null) {
+              colorStealOther(o);
+            }
+          }
           // Update our data into the self object, and update avatars for remote users from the others object.
           replicatePoses(self, others);
-          
+
           // Render with the appropriate camera for either VR or non-VR modes.
           world.renderer.render(world.scene, activeCamera);
 
@@ -638,10 +618,12 @@ const chunks = splitArrayIntoChunks(objects, 4);
         }
 
         // Start animating!
-        
+
         world.renderer.setAnimationLoop(animate);
-        
+
       }
+      joinRoom();
     </script>
-  </body>
+</body>
+
 </html>

@@ -21,8 +21,10 @@ const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 */
 
-// this will be true if there's no .env file
-const IS_HTTP = (!process.env.PORT_HTTP);
+// this will be true if this server is running on Heroku
+const IS_HEROKU = (process.env._ && process.env._.indexOf("heroku") !== -1);
+// this will be true if we are running on Heroku (HTTP ONLY), or there's no .env file
+const IS_HTTP = IS_HEROKU || (!process.env.PORT_HTTP);
 
 const PORT_HTTP = IS_HTTP ? (process.env.PORT || 3000) : (process.env.PORT_HTTP || 80);
 const PORT_HTTPS = process.env.PORT_HTTPS || 443;
@@ -73,10 +75,10 @@ console.log("GRAHAMS GREAT TEST")
 
 // Audio Server 
 
-//require('child_process').fork('audioSignalingServer.js');
+require('child_process').fork('audioSignalingServer.js');
 
 //if (location.hostname === "localhost" || location.hostname === "127.0.0.1"){
-	require('child_process').fork('audioSignalingServer.js');
+	//require('child_process').fork('audioSignalingServer.js');
 // }
 
 // else{
